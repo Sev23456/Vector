@@ -2,18 +2,16 @@
 #define COMPLEX_H
 
 #include <stdlib.h>
+#include <stdio.h>
 
-typedef struct Complex {
+typedef struct {
     double real;
     double imag;
 } Complex;
 
-Complex add(Complex x, Complex y);
+Complex Sum(Complex x, Complex y);
+Complex Product(Complex x, Complex y);
+Complex Subtraction(Complex x, Complex y);
+Complex Division(Complex x, Complex y);
 
-Complex product(Complex x, Complex y);
-
-Complex subtraction(Complex x, Complex y);
-
-Complex division(Complex x, Complex y);
-
-#endif
+#endif // COMPLEX_H

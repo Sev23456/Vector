@@ -1,93 +1,228 @@
+#include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "vector_api.h"
 
-static void prompt_enter() {
-    printf("Press Enter to continue...");
-    getchar();
+#include "n_vector.h"
+
+static void print_menu(void) {
+    printf("\nChoose operation:\n");
+    printf("1. Create and test vectors\n");
+    printf("2. Add two vectors\n");
+    printf("3. Subtract two vectors\n");
+    printf("4. Calculate dot product\n");
+    printf("0. Exit\n");
+    printf("Enter choice: ");
 }
 
-static void read_line(char* buf, size_t n) {
-    if (fgets(buf, (int)n, stdin) == NULL) return;
-    size_t len = strlen(buf);
-    if (len && buf[len-1] == '\n') buf[len-1] = '\0';
+static int read_menu_choice(int *choice) {
+    char buffer[64];
+    char *end = NULL;
+    long value;
+
+    if (!fgets(buffer, sizeof(buffer), stdin)) {
+        return 0;
+    }
+
+    value = strtol(buffer, &end, 10);
+    if (end == buffer) {
+        printf("Invalid input. Enter a number from 0 to 4.\n");
+        return -1;
+    }
+
+    while (*end != '\0') {
+        if (!isspace((unsigned char)*end)) {
+            printf("Invalid input. Enter a number from 0 to 4.\n");
+            return -1;
+        }
+        end++;
+    }
+
+    if (value < INT_MIN || value > INT_MAX) {
+        printf("Input is out of range.\n");
+        return -1;
+    }
+
+    *choice = (int)value;
+    return 1;
+}
+
+static void print_memory_error(void) {
+    printf("Memory allocation failed.\n");
+}
+
+static void run_create_demo(void) {
+    int int_vals[] = {1, 2, 3, 4, 5};
+    double double_vals[] = {1.5, 2.5, 3.5};
+    Complex complex_vals[] = {{1.0, 2.0}, {3.0, -1.0}, {0.0, 5.0}};
+    NVector *v1 = create_vector(TYPE_INT, 5, int_vals);
+    NVector *v2 = create_vector(TYPE_DOUBLE, 3, double_vals);
+    NVector *v3 = create_vector(TYPE_COMPLEX, 3, complex_vals);
+
+    printf("\nTesting vector creation and printing:\n");
+
+    if (!v1 || !v2 || !v3) {
+        print_memory_error();
+        free_vector(v1);
+        free_vector(v2);
+        free_vector(v3);
+        return;
+    }
+
+    printf("Integer vector: ");
+    print_vector(v1);
+    printf("Double vector: ");
+    print_vector(v2);
+    printf("Complex vector: ");
+    print_vector(v3);
+
+    free_vector(v1);
+    free_vector(v2);
+    free_vector(v3);
+}
+
+static void run_add_demo(void) {
+    int vals1[] = {1, 2, 3};
+    int vals2[] = {4, 5, 6};
+    NVector *v1 = create_vector(TYPE_INT, 3, vals1);
+    NVector *v2 = create_vector(TYPE_INT, 3, vals2);
+    NVector *sum;
+
+    printf("\nAdding two vectors:\n");
+
+    if (!v1 || !v2) {
+        print_memory_error();
+        free_vector(v1);
+        free_vector(v2);
+        return;
+    }
+
+    printf("Vector 1: ");
+    print_vector(v1);
+    printf("Vector 2: ");
+    print_vector(v2);
+
+    sum = add_vectors(v1, v2);
+    if (sum) {
+        printf("Sum: ");
+        print_vector(sum);
+        free_vector(sum);
+    } else {
+        printf("Cannot add vectors (different types or dimensions)\n");
+    }
+
+    free_vector(v1);
+    free_vector(v2);
+}
+
+static void run_subtract_demo(void) {
+    int vals1[] = {5, 7, 9};
+    int vals2[] = {2, 3, 4};
+    NVector *v1 = create_vector(TYPE_INT, 3, vals1);
+    NVector *v2 = create_vector(TYPE_INT, 3, vals2);
+    NVector *diff;
+
+    printf("\nSubtracting two vectors:\n");
+
+    if (!v1 || !v2) {
+        print_memory_error();
+        free_vector(v1);
+        free_vector(v2);
+        return;
+    }
+
+    printf("Vector 1: ");
+    print_vector(v1);
+    printf("Vector 2: ");
+    print_vector(v2);
+
+    diff = subtract_vectors(v1, v2);
+    if (diff) {
+        printf("Difference: ");
+        print_vector(diff);
+        free_vector(diff);
+    } else {
+        printf("Cannot subtract vectors (different types or dimensions)\n");
+    }
+
+    free_vector(v1);
+    free_vector(v2);
+}
+
+static void run_dot_product_demo(void) {
+    int vals1[] = {1, 2, 3};
+    int vals2[] = {4, 5, 6};
+    NVector *v1 = create_vector(TYPE_INT, 3, vals1);
+    NVector *v2 = create_vector(TYPE_INT, 3, vals2);
+    void *dp;
+
+    printf("\nCalculating dot product:\n");
+
+    if (!v1 || !v2) {
+        print_memory_error();
+        free_vector(v1);
+        free_vector(v2);
+        return;
+    }
+
+    printf("Vector 1: ");
+    print_vector(v1);
+    printf("Vector 2: ");
+    print_vector(v2);
+
+    dp = dot_product(v1, v2);
+    if (dp) {
+        printf("Dot product: ");
+        print_scalar(v1->type, dp);
+        printf("\n");
+        free(dp);
+    } else {
+        printf("Cannot calculate dot product (different types or dimensions)\n");
+    }
+
+    free_vector(v1);
+    free_vector(v2);
 }
 
 int main(void) {
-    Vector* a = NULL;
-    Vector* b = NULL;
-    char line[256];
+    int choice = -1;
 
-    while (1) {
-        system("cls");
-        printf("Simple Vector CLI\n");
-        printf("1) Create vector A\n");
-        printf("2) Create vector B\n");
-        printf("3) Input elements for A\n");
-        printf("4) Input elements for B\n");
-        printf("5) Print A and B\n");
-        printf("6) A + B (prints result)\n");
-        printf("7) A . B (scalar product)\n");
-        printf("0) Exit\n");
-        printf("Choose: ");
-        read_line(line, sizeof(line));
+    printf("=== N-Dimensional Vector Calculator ===\n");
 
-        int cmd = atoi(line);
-        if (cmd == 0) break;
+    while (choice != 0) {
+        int status;
 
-        if (cmd == 1 || cmd == 2) {
-            printf("Enter dimension (non-negative integer): ");
-            read_line(line, sizeof(line));
-            long n = atol(line);
-            if (n < 0) {
-                printf("Invalid size\n"); prompt_enter(); continue;
-            }
-            Vector* v = vector_create((size_t)n);
-            if (!v) { printf("Allocation failed\n"); prompt_enter(); continue; }
-            if (cmd == 1) { if (a) vector_free(a); a = v; } else { if (b) vector_free(b); b = v; }
-            printf("Vector created (size=%zu)\n", v->size);
-            prompt_enter();
+        print_menu();
+        status = read_menu_choice(&choice);
+        if (status == 0) {
+            printf("\nInput closed. Exiting...\n");
+            break;
+        }
+        if (status < 0) {
             continue;
         }
 
-        if (cmd == 3 || cmd == 4) {
-            Vector* v = (cmd == 3) ? a : b;
-            if (!v) { printf("Vector not created yet\n"); prompt_enter(); continue; }
-            for (size_t i = 0; i < v->size; i++) {
-                printf("Enter element [%zu]: ", i);
-                read_line(line, sizeof(line));
-                double val = atof(line);
-                vector_set(v, i, val);
-            }
-            printf("Values set\n"); prompt_enter(); continue;
+        switch (choice) {
+            case 1:
+                run_create_demo();
+                break;
+            case 2:
+                run_add_demo();
+                break;
+            case 3:
+                run_subtract_demo();
+                break;
+            case 4:
+                run_dot_product_demo();
+                break;
+            case 0:
+                printf("Exiting...\n");
+                break;
+            default:
+                printf("Invalid choice. Try again.\n");
+                break;
         }
-
-        if (cmd == 5) {
-            printf("Vector A:\n"); if (a) vector_print(a); else printf("(not created)\n");
-            printf("Vector B:\n"); if (b) vector_print(b); else printf("(not created)\n");
-            prompt_enter(); continue;
-        }
-
-        if (cmd == 6) {
-            if (!a || !b) { printf("Both vectors must be created\n"); prompt_enter(); continue; }
-            Vector* sum = vector_add(a, b);
-            if (!sum) { printf("Addition failed (size mismatch?)\n"); prompt_enter(); continue; }
-            printf("A + B =\n"); vector_print(sum); vector_free(sum); prompt_enter(); continue;
-        }
-
-        if (cmd == 7) {
-            if (!a || !b) { printf("Both vectors must be created\n"); prompt_enter(); continue; }
-            int err = 0;
-            double dp = vector_dot(a, b, &err);
-            if (err) { printf("Dot product failed (size mismatch?)\n"); prompt_enter(); continue; }
-            printf("A . B = %.10g\n", dp); prompt_enter(); continue;
-        }
-
-        printf("Unknown option\n"); prompt_enter();
     }
 
-    if (a) vector_free(a);
-    if (b) vector_free(b);
     return 0;
 }
