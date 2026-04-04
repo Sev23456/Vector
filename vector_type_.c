@@ -126,18 +126,16 @@ void* scalar_product(Vector* vector_1, Vector* vector_2, void* result, DataType 
         return NULL;
     }
 
-    // Предполагается, что result указывает на переменную нужного типа (например, double или Complex)
-    memset(result, 0, vector_1->fieldinfo->elem_size); // Инициализируем результат нулём
-
+    memset(result, 0, vector_1->fieldinfo->elem_size);
     for (size_t i = 0; i < vector_1->size; i++) {
         void* elem1 = vector_get(vector_1, i);
         void* elem2 = vector_get(vector_2, i);
 
-        // Временная переменная для хранения произведения
+        // временная переменная для хранения произведения
         void* product = malloc(vector_1->fieldinfo->elem_size);
         multiply(elem1, elem2, product, type);
 
-        // Прибавляем произведение к результату
+        // прибавляем произведение к результату
         sum(result, product, result, type);
 
         free(product);

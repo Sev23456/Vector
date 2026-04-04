@@ -23,29 +23,37 @@ void vector_free(Vector* v) {
 }
 
 int vector_set(Vector* v, size_t idx, double val) {
-    if (!v || idx >= v->size) return 0;
+    if (!v || idx >= v->size) 
+        return 0;
     v->data[idx] = val;
     return 1;
 }
 
 double vector_get(const Vector* v, size_t idx) {
-    if (!v || idx >= v->size) return 0.0;
+    if (!v || idx >= v->size) 
+        return 0.0;
     return v->data[idx];
 }
 
 Vector* vector_add(const Vector* a, const Vector* b) {
-    if (!a || !b) return NULL;
-    if (a->size != b->size) return NULL;
+    if (!a || !b) 
+        return NULL;
+    if (a->size != b->size) 
+        return NULL;
     Vector* r = vector_create(a->size);
-    if (!r) return NULL;
+    if (!r) 
+        return NULL;
     for (size_t i = 0; i < a->size; i++) r->data[i] = a->data[i] + b->data[i];
     return r;
 }
 
 double vector_dot(const Vector* a, const Vector* b, int* err) {
-    if (err) *err = 1;
-    if (!a || !b) return 0.0;
-    if (a->size != b->size) return 0.0;
+    if (err) 
+        *err = 1;
+    if (!a || !b) 
+        return 0.0;
+    if (a->size != b->size) 
+        return 0.0;
     double sum = 0.0;
     for (size_t i = 0; i < a->size; i++) sum += a->data[i] * b->data[i];
     if (err) *err = 0;
